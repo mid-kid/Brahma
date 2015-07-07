@@ -134,7 +134,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(OUTPUT).3dsx $(OUTPUT).smdh $(TOPDIR)/$(TARGET).elf
+	@rm -fr $(BUILD) $(OUTPUT).3dsx $(OUTPUT).smdh
 
 
 #---------------------------------------------------------------------------------
@@ -150,8 +150,7 @@ ifeq ($(strip $(NO_SMDH)),)
 all	:	$(OUTPUT).3dsx $(OUTPUT).smdh
 endif
 cpu.o cpu_threaded.o: CFLAGS += -Wno-unused-variable -Wno-unused-label
-$(OUTPUT).3dsx			:	$(TOPDIR)/$(TARGET).elf
-$(TOPDIR)/$(TARGET).elf	:	$(OFILES)
+$(OUTPUT).3dsx			:	$(OFILES)
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
