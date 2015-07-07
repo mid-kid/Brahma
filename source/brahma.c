@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include "brahma.h"
 #include "exploitdata.h"
+#include "utils.h"
 
 GSP_FramebufferInfo topFramebufferInfo, bottomFramebufferInfo;
 
@@ -319,9 +320,7 @@ s32 map_arm9_payload (void) {
 	dst = (void *)(g_expdata.va_fcram_base + OFFS_FCRAM_ARM9_PAYLOAD);
 
 	if (!g_ext_arm9_loaded) {
-		// defaul ARM9 payload
-		src = &arm9_start;
-		size = (u8 *)&arm9_end - (u8 *)&arm9_start;
+        return 0;
 	}
 	else {
 		// external ARM9 payload

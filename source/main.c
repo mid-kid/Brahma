@@ -1,12 +1,7 @@
 #include <3ds.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <malloc.h>
 #include "brahma.h"
 #include "hid.h"
-#include "menus.h"
-#include "sochlp.h"
 
 #ifndef LAUNCHER_PATH
 #define LAUNCHER_PATH "Cakes.dat"
@@ -63,8 +58,8 @@ s32 main (void) {
 
 error:
     consoleInit(GFX_BOTTOM, NULL);
-    printf("An error occurred while loading the payload.\nMake sure your launcher is located at:\n/" LAUNCHER_PATH "\n\nPress any key to exit");
-    wait_key();
+    printf("An error occurred while loading the payload.\nMake sure your launcher is located at:\n/" LAUNCHER_PATH);
+    wait_any_key();
 
     if (payload) free(payload);
 
