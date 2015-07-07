@@ -11,6 +11,7 @@
 #include "brahma.h"
 #include "exploitdata.h"
 
+GSP_FramebufferInfo topFramebufferInfo, bottomFramebufferInfo;
 
 /* should be the very first call. allocates heap buffer
    for ARM9 payload */ 
@@ -426,6 +427,18 @@ priv_firm_reboot (void) {
 	asm volatile ("add sp, sp, #8\t\n");
 	
 	repair_svcCreateThread();
+
+    // Save the framebuffers for arm9,
+    u32 *save = (u32 *)(g_expdata.va_fcram_base + 0x3FFFE00);
+    save[0] = topFramebufferInfo.framebuf0_vaddr;
+    save[1] = topFramebufferInfo.framebuf1_vaddr;
+    save[2] = bottomFramebufferInfo.framebuf0_vaddr;
+
+    // Working around a GCC bug to translate the va address to pa...
+    save[0] += 0xC000000;  // (pa FCRAM address - va FCRAM address)
+    save[1] += 0xC000000;
+    save[2] += 0xC000000;
+
 	exploit_arm9_race_condition();
 	
 	asm volatile ("movs r0, #0\t\n"

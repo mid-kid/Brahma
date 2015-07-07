@@ -8,43 +8,9 @@
 #include "menus.h"
 #include "sochlp.h"
 
-void interact_with_user (void) {
-	s32 menuidx = 0;
-	
-	while (aptMainLoop()) {
-		gspWaitForVBlank();
-
-		menuidx = print_main_menu(menuidx, &g_main_menu);		
-
-		u32 kDown = wait_key(); 
-		
-		if (kDown & KEY_B) {
-			break;
-		}
-		else if (kDown & KEY_A) {
-			consoleClear();
-			printf("\n");
-			if (menu_execute_function(menuidx, &g_main_menu, 0))
-				wait_any_key();
-		}
-		else if (kDown & KEY_UP) {
-			menuidx--;
-		}
-		else if (kDown & KEY_DOWN) {
-			menuidx++;
-		}
-		gfxFlushBuffers();
-		gfxSwapBuffers(); 
-	}
-
-	return;
-}
-
-s32 quick_boot_firm (s32 load_from_disk) {
-	if (load_from_disk)
-		load_arm9_payload("/arm9payload.bin");
-	firm_reboot();	
-}
+#ifndef LAUNCHER_PATH
+#define LAUNCHER_PATH "Cakes.dat"
+#endif
 
 s32 main (void) {
 	// Initialize services
@@ -56,31 +22,34 @@ s32 main (void) {
 	sdmcInit();
 	hbInit();
 	qtmInit();
-	
-	consoleInit(GFX_BOTTOM, NULL);
-	if (brahma_init()) {
-		hidScanInput();
-		u32 kHeld = hidKeysHeld();
-	 
-		if (kHeld & KEY_LEFT) {
-			/* load default payload from dosk and run exploit */
-			quick_boot_firm(1);
-			printf("[!] Quickload failed\n");
-			wait_any_key();
-		} else if (kHeld & KEY_RIGHT) {
-			/* reboot only */
-			quick_boot_firm(0);
-		}
-	
-		soc_init();	
-		interact_with_user();
-		soc_exit();
-		brahma_exit();
 
-	} else {
-		printf("* BRAHMA *\n\n[!]Not enough memory\n");
-		wait_any_key();
-	}
+    // Make sure the settings applied by gfxInitDefault come into effect
+    gfxSwapBuffers();
+
+    // Memory for the arm9 payload
+    u32 payload_size = 0x10000;
+    void *payload = malloc(payload_size);
+    if (!payload) goto error;
+
+    int rc;
+
+    // Load the arm9 payload into memory
+    FILE *file = fopen("/" LAUNCHER_PATH, "r");
+    if (!file) goto error;
+    rc = fseek(file, 0x20000, SEEK_SET);
+    if (rc != 0) goto error;
+    fread(payload, payload_size, 1, file);
+    if (ferror(file) != 0) goto error;
+    fclose(file);
+
+    if (brahma_init()) {
+        rc = load_arm9_payload_from_mem(payload, payload_size);
+        if (rc != 1) goto error;
+        firm_reboot();
+        brahma_exit();
+    }
+
+    free(payload);
 
 	hbExit();
 	sdmcExit();
@@ -91,4 +60,20 @@ s32 main (void) {
 	srvExit();
 	// Return to hbmenu
 	return 0;
+
+error:
+    consoleInit(GFX_BOTTOM, NULL);
+    printf("An error occurred while loading the payload.\nMake sure your launcher is located at:\n/" LAUNCHER_PATH "\n\nPress any key to exit");
+    wait_key();
+
+    if (payload) free(payload);
+
+	hbExit();
+	sdmcExit();
+	fsExit();
+	gfxExit();
+	hidExit();
+	aptExit();
+	srvExit();
+    return 1;
 }

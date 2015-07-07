@@ -9,6 +9,11 @@ endif
 TOPDIR ?= $(CURDIR)
 include $(DEVKITARM)/3ds_rules
 
+# This should be set externally
+name ?= Cakes.dat
+path ?=
+dir_out ?= $(CURDIR)
+
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -26,14 +31,14 @@ include $(DEVKITARM)/3ds_rules
 #     - icon.png
 #     - <libctru folder>/default_icon.png
 #---------------------------------------------------------------------------------
-TARGET		:=	$(notdir $(CURDIR))
+TARGET		:=	$(name:.dat=)
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
-APP_TITLE	:=	BRAHMA
-APP_DESCRIPTION :=	Privileged ARM11/ARM9 Code Execution
-APP_AUTHOR	:=	patois
+APP_TITLE	?=	$(name:.dat=)
+APP_DESCRIPTION ?=	Privileged ARM11/ARM9 Code Execution
+APP_AUTHOR	?=	patois
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -44,7 +49,7 @@ CFLAGS	:=	-g -Wall -O3 -mword-relocations \
 			-fomit-frame-pointer -ffast-math \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DARM_ARCH -w
+CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DARM_ARCH -w -DLAUNCHER_PATH='"$(path)$(name)"'
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11 -w
 
@@ -67,7 +72,7 @@ LIBDIRS	:= $(CTRULIB)
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
 
-export OUTPUT	:=	$(CURDIR)/$(TARGET)
+export OUTPUT	:=	$(dir_out)/$(TARGET)
 export TOPDIR	:=	$(CURDIR)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir)) \
@@ -113,7 +118,7 @@ ifeq ($(strip $(ICON)),)
 		endif
 	endif
 else
-	export APP_ICON := $(TOPDIR)/$(ICON)
+	export APP_ICON := $(ICON)
 endif
 
 .PHONY: $(BUILD) clean all
@@ -129,7 +134,7 @@ $(BUILD):
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).3dsx $(OUTPUT).smdh $(TARGET).elf
+	@rm -fr $(BUILD) $(OUTPUT).3dsx $(OUTPUT).smdh $(TARGET).elf
 
 
 #---------------------------------------------------------------------------------
@@ -145,8 +150,8 @@ ifeq ($(strip $(NO_SMDH)),)
 all	:	$(OUTPUT).3dsx $(OUTPUT).smdh
 endif
 cpu.o cpu_threaded.o: CFLAGS += -Wno-unused-variable -Wno-unused-label
-$(OUTPUT).3dsx	:	$(OUTPUT).elf
-$(OUTPUT).elf	:	$(OFILES)
+$(OUTPUT).3dsx	:	$(TARGET).elf
+$(TARGET).elf	:	$(OFILES)
 
 #---------------------------------------------------------------------------------
 # you need a rule like this for each extension you use as binary data
