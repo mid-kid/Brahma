@@ -31,7 +31,7 @@ s32 main (void) {
     // Load the arm9 payload into memory
     FILE *file = fopen("/" LAUNCHER_PATH, "r");
     if (!file) goto error;
-    rc = fseek(file, 0x20000, SEEK_SET);
+    rc = fseek(file, 0x12000, SEEK_SET);
     if (rc != 0) goto error;
     fread(payload, payload_size, 1, file);
     if (ferror(file) != 0) goto error;
