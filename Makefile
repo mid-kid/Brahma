@@ -11,7 +11,7 @@ include $(DEVKITARM)/3ds_rules
 
 # This should be set externally
 name ?= Cakes.dat
-path ?=
+filepath ?=
 dir_out ?= $(CURDIR)
 
 #---------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ CFLAGS	:=	-g -Wall -O3 -mword-relocations \
 			-fomit-frame-pointer -ffast-math \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DARM_ARCH -w -DLAUNCHER_PATH='"$(path)$(name)"'
+CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DARM_ARCH -w -DLAUNCHER_PATH='"$(filepath)$(name)"'
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11 -w
 
