@@ -8,15 +8,8 @@
 #endif
 
 s32 main (void) {
-	// Initialize services
-	srvInit();
-	aptInit();
-	hidInit(NULL);
-	gfxInitDefault();
-	fsInit();
-	sdmcInit();
-	hbInit();
-	qtmInit();
+    // Initialize services
+    gfxInitDefault();
 
     // Make sure the settings applied by gfxInitDefault come into effect
     gfxSwapBuffers();
@@ -46,15 +39,9 @@ s32 main (void) {
 
     free(payload);
 
-	hbExit();
-	sdmcExit();
-	fsExit();
-	gfxExit();
-	hidExit();
-	aptExit();
-	srvExit();
-	// Return to hbmenu
-	return 0;
+    gfxExit();
+    // Return to hbmenu
+    return 0;
 
 error:
     consoleInit(GFX_BOTTOM, NULL);
@@ -63,12 +50,6 @@ error:
 
     if (payload) free(payload);
 
-	hbExit();
-	sdmcExit();
-	fsExit();
-	gfxExit();
-	hidExit();
-	aptExit();
-	srvExit();
+    gfxExit();
     return 1;
 }

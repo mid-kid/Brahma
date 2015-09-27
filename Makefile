@@ -33,7 +33,7 @@ dir_out ?= $(CURDIR)
 #---------------------------------------------------------------------------------
 TARGET		:=	$(name:.dat=)
 BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source source/libkhax
 DATA		:=	data
 INCLUDES	:=	include
 APP_TITLE	?=	$(name:.dat=)
