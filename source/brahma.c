@@ -4,15 +4,22 @@
 #include <string.h>
 #include <malloc.h>
 #include <dirent.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/_default_fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include "brahma.h"
 #include "exploitdata.h"
 #include "utils.h"
 #include "libkhax/khax.h"
 
+static u8  *g_ext_arm9_buf;
+static u32 g_ext_arm9_size = 0;
+static s32 g_ext_arm9_loaded = 0;
+static struct exploit_data g_expdata;
+static struct arm11_shared_data g_arm11shared;
 GSP_FramebufferInfo topFramebufferInfo, bottomFramebufferInfo;
 
 /* should be the very first call. allocates heap buffer
@@ -33,7 +40,7 @@ u32 brahma_exit (void) {
 /* overwrites two instructions (8 bytes in total) at src_addr
    with code that redirects execution to dst_addr */ 
 void redirect_codeflow (u32 *dst_addr, u32 *src_addr) {
-	*(src_addr + 1) = dst_addr;
+	*(src_addr + 1) = (u32)dst_addr;
 	*src_addr = ARM_JUMPOUT;	
 }
 
@@ -84,11 +91,10 @@ s32 setup_exploit_data (void) {
 s32 recv_arm9_payload (void) {
 	s32 sockfd;
 	struct sockaddr_in sa;
-	s32 ret;
 	u32 kDown, old_kDown;
 	s32 clientfd;
 	struct sockaddr_in client_addr;
-	s32 addrlen = sizeof(client_addr);
+	u32 addrlen = sizeof(client_addr);
 	s32 sflags = 0;
 		
 	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -101,7 +107,7 @@ s32 recv_arm9_payload (void) {
 	sa.sin_port = htons(BRAHMA_NETWORK_PORT);
 	sa.sin_addr.s_addr = gethostid();
 
-    if (bind(sockfd, (struct sockaddr*)&sa, sizeof(sa)) != 0) {
+	if (bind(sockfd, (struct sockaddr*)&sa, sizeof(sa)) != 0) {
 		printf("[!] Error: bind()\n");
 		close(sockfd);
 		return 0;
@@ -163,7 +169,7 @@ s32 recv_arm9_payload (void) {
 
 	fcntl(sockfd, F_SETFL, sflags & ~O_NONBLOCK);
 
-	printf("\n\n[x] Received %d bytes in total\n", total);
+	printf("\n\n[x] Received %u bytes in total\n", (unsigned int)total);
 	g_ext_arm9_size = overflow ? 0 : total;
 	g_ext_arm9_loaded = (g_ext_arm9_size != 0);
 
@@ -225,7 +231,7 @@ s32 load_arm9_payload_from_mem (u8* data, u32 dsize) {
      - a placeholder (u32) at offset 4 (=ARM9 entrypoint) */ 
 s32 map_arm9_payload (void) {
 	void *src;
-	volatile void *dst;
+	void *dst;
 
 	u32 size = 0;
 	s32 result = 0;
@@ -251,7 +257,7 @@ s32 map_arm9_payload (void) {
 
 s32 map_arm11_payload (void) {
 	void *src;
-	volatile void *dst;
+	void *dst;
 	u32 size = 0;
 	u32 offs;
 	s32 result_a = 0;
@@ -298,13 +304,13 @@ void exploit_arm9_race_condition (void) {
 		/* patch ARM11 kernel to force it to execute
 		   our code (hook1 and hook2) as soon as a
 		   "firmlaunch" is triggered */ 	 
-		redirect_codeflow(g_expdata.va_exc_handler_base_X +
-		                  OFFS_EXC_HANDLER_UNUSED,
-		                  g_expdata.va_patch_hook1);
+		redirect_codeflow((u32 *)(g_expdata.va_exc_handler_base_X +
+		                  OFFS_EXC_HANDLER_UNUSED),
+		                  (u32 *)g_expdata.va_patch_hook1);
 	
-		redirect_codeflow(PA_EXC_HANDLER_BASE +
-		                  OFFS_EXC_HANDLER_UNUSED + 4,
-		                  g_expdata.va_patch_hook2);
+		redirect_codeflow((u32 *)(PA_EXC_HANDLER_BASE +
+		                  OFFS_EXC_HANDLER_UNUSED + 4),
+		                  (u32 *)g_expdata.va_patch_hook2);
 
 		CleanEntireDataCache();
 		InvalidateEntireInstructionCache();
@@ -323,9 +329,9 @@ s32 priv_firm_reboot (void) {
 	
     // Save the framebuffers for arm9,
     u32 *save = (u32 *)(g_expdata.va_fcram_base + 0x3FFFE00);
-    save[0] = topFramebufferInfo.framebuf0_vaddr;
-    save[1] = topFramebufferInfo.framebuf1_vaddr;
-    save[2] = bottomFramebufferInfo.framebuf0_vaddr;
+    save[0] = (u32)topFramebufferInfo.framebuf0_vaddr;
+    save[1] = (u32)topFramebufferInfo.framebuf1_vaddr;
+    save[2] = (u32)bottomFramebufferInfo.framebuf0_vaddr;
 
     // Working around a GCC bug to translate the va address to pa...
     save[0] += 0xC000000;  // (pa FCRAM address - va FCRAM address)
