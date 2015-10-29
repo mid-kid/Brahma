@@ -50,7 +50,7 @@ void redirect_codeflow (u32 *dst_addr, u32 *src_addr) {
 s32 get_exploit_data (struct exploit_data *data) {
 	u32 fversion = 0;    
 	u8  isN3DS = 0;
-	s32 i;
+	u32 i;
 	s32 result = 0;
 	u32 sysmodel = SYS_MODEL_NONE;
 
@@ -247,7 +247,7 @@ s32 map_arm9_payload (void) {
 		size = g_ext_arm9_size;
 	}
 
-	if (size >= 0 && size <= ARM9_PAYLOAD_MAX_SIZE) {
+	if (!size && size <= ARM9_PAYLOAD_MAX_SIZE) {
 		memcpy(dst, src, size);
 		result = 1;
 	}

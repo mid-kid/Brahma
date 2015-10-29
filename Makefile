@@ -45,7 +45,7 @@ APP_AUTHOR	?=	patois
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard
 
-CFLAGS	:=	-g -Wall -O3 -mword-relocations \
+CFLAGS	:=	-g -Wall -Wextra -O3 -mword-relocations \
 			-fomit-frame-pointer -ffast-math \
 			$(ARCH)
 
