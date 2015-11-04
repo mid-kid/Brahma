@@ -247,7 +247,7 @@ s32 map_arm9_payload (void) {
 		size = g_ext_arm9_size;
 	}
 
-	if (!size && size <= ARM9_PAYLOAD_MAX_SIZE) {
+	if (size <= ARM9_PAYLOAD_MAX_SIZE) {
 		memcpy(dst, src, size);
 		result = 1;
 	}
