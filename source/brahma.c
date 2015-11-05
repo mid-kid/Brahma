@@ -231,7 +231,7 @@ s32 load_arm9_payload_from_mem (u8* data, u32 dsize) {
      - a placeholder (u32) at offset 4 (=ARM9 entrypoint) */
 s32 map_arm9_payload (void) {
 	void *src;
-	void *dst;
+	volatile void *dst;
 
 	u32 size = 0;
 	s32 result = 0;
@@ -248,7 +248,7 @@ s32 map_arm9_payload (void) {
 	}
 
 	if (size <= ARM9_PAYLOAD_MAX_SIZE) {
-		memcpy(dst, src, size);
+		memcpy((void *)dst, src, size);
 		result = 1;
 	}
 
@@ -257,7 +257,7 @@ s32 map_arm9_payload (void) {
 
 s32 map_arm11_payload (void) {
 	void *src;
-	void *dst;
+	volatile void *dst;
 	u32 size = 0;
 	u32 offs;
 	s32 result_a = 0;
@@ -269,7 +269,7 @@ s32 map_arm11_payload (void) {
 
 	// TODO: sanitize 'size'
 	if (size) {
-		memcpy(dst, src, size);
+		memcpy((void *)dst, src, size);
 		result_a = 1;
 	}
 
@@ -282,7 +282,7 @@ s32 map_arm11_payload (void) {
 
 	// TODO sanitize 'size'
 	if (result_a && size) {
-		memcpy(dst, src, size);
+		memcpy((void *)dst, src, size);
 		result_b = 1;
 	}
 
