@@ -1,5 +1,6 @@
 #include <3ds.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "brahma.h"
 #include "hid.h"
 
@@ -7,7 +8,7 @@
 #define LAUNCHER_PATH "Cakes.dat"
 #endif
 
-s32 main (void) {
+int main (void) {
     // Initialize services
     gfxInitDefault();
 
