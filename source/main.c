@@ -15,30 +15,15 @@ int main (void) {
     // Make sure the settings applied by gfxInitDefault come into effect
     gfxSwapBuffers();
 
-    // Memory for the arm9 payload
-    u32 payload_size = 0x10000;
-    void *payload = malloc(payload_size);
-    if (!payload) goto error;
-
-    int rc;
-
-    // Load the arm9 payload into memory
-    FILE *file = fopen("/" LAUNCHER_PATH, "r");
-    if (!file) goto error;
-    rc = fseek(file, 0x12000, SEEK_SET);
-    if (rc != 0) goto error;
-    fread(payload, payload_size, 1, file);
-    if (ferror(file) != 0) goto error;
-    fclose(file);
-
+    // Load arm9 payload from file
+    const u32 max_size = 0x10000;
+    const u32 offset = 0x12000;
     if (brahma_init()) {
-        rc = load_arm9_payload_from_mem(payload, payload_size);
+        int rc = load_arm9_payload("/" LAUNCHER_PATH, offset, max_size);
         if (rc != 1) goto error;
         firm_reboot();
         brahma_exit();
     }
-
-    free(payload);
 
     gfxExit();
     // Return to hbmenu
@@ -46,11 +31,10 @@ int main (void) {
 
 error:
     consoleInit(GFX_BOTTOM, NULL);
-    printf("An error occurred while loading the payload.\nMake sure your launcher is located at:\n/" LAUNCHER_PATH);
+    printf("An error occurred while loading the payload.\n"
+            "Make sure your launcher is located at:\n"
+            "/" LAUNCHER_PATH);
     wait_any_key();
-
-    if (payload) free(payload);
-
     gfxExit();
     return 1;
 }

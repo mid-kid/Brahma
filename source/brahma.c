@@ -49,7 +49,7 @@ void redirect_codeflow (u32 *dst_addr, u32 *src_addr) {
    returns: 0 on failure, 1 on success */
 s32 get_exploit_data (struct exploit_data *data) {
 	u32 fversion = 0;
-	u8  isN3DS = 0;
+	u8 isN3DS = 0;
 	u32 i;
 	s32 result = 0;
 	u32 sysmodel = SYS_MODEL_NONE;
@@ -62,7 +62,7 @@ s32 get_exploit_data (struct exploit_data *data) {
 	sysmodel = isN3DS ? SYS_MODEL_NEW_3DS : SYS_MODEL_OLD_3DS;
 
 	/* copy platform and firmware dependent data */
-	for(i=0; i < sizeof(supported_systems) / sizeof(supported_systems[0]); i++) {
+	for(i = 0; i < sizeof(supported_systems) / sizeof(supported_systems[0]); i++) {
 		if (supported_systems[i].firm_version == fversion &&
 			supported_systems[i].sys_model & sysmodel) {
 				memcpy(data, &supported_systems[i], sizeof(struct exploit_data));
@@ -155,7 +155,7 @@ s32 recv_arm9_payload (void) {
 	u32 total = 0;
 	s32 overflow = 0;
 	while ((recvd = recv(clientfd, g_ext_arm9_buf + total,
-	                     ARM9_PAYLOAD_MAX_SIZE - total, 0)) != 0) {
+			ARM9_PAYLOAD_MAX_SIZE - total, 0)) != 0) {
 		if (recvd != -1) {
 			total += recvd;
 			printf(".");
@@ -180,24 +180,35 @@ s32 recv_arm9_payload (void) {
 }
 
 /* reads ARM9 payload from a given path.
-   filename: full path of payload
-   returns: 0 on failure, 1 on success */
-s32 load_arm9_payload (char *filename) {
+filename: full path of payload
+offset: offset of the payload
+max_psize: if > 0 max payload size (should be <= ARM9_MAX_PAYLOAD_SIZE)
+returns: 0 on failure, 1 on success */
+s32 load_arm9_payload (char *filename, u32 offset, u32 max_psize) {
 	s32 result = 0;
 	u32 fsize = 0;
+	u32 psize = 0;
+
+	if ((max_psize == 0) || (max_psize > ARM9_PAYLOAD_MAX_SIZE))
+		max_psize = ARM9_PAYLOAD_MAX_SIZE;
 
 	if (!filename)
 		return result;
 
 	FILE *f = fopen(filename, "rb");
 	if (f) {
-		fseek(f , 0, SEEK_END);
+		fseek(f, 0, SEEK_END);
 		fsize = ftell(f);
-		g_ext_arm9_size = fsize;
-		rewind(f);
-		if (fsize >= 8 && (fsize <= ARM9_PAYLOAD_MAX_SIZE)) {
-				u32 bytes_read = fread(g_ext_arm9_buf, 1, fsize, f);
-				result = (g_ext_arm9_loaded = (bytes_read == fsize));
+		if (offset <= fsize) {
+			psize = fsize - offset;
+			if (offset > 0 && psize > max_psize)
+				psize = max_psize; // only fix when offset > 0
+			fseek(f, offset, SEEK_SET);
+			g_ext_arm9_size = psize;
+			if (psize >= 8 && (psize <= ARM9_PAYLOAD_MAX_SIZE)) {
+				u32 bytes_read = fread(g_ext_arm9_buf, 1, psize, f);
+				result = (g_ext_arm9_loaded = (bytes_read == psize));
+			}
 		}
 		fclose(f);
 	}
@@ -239,7 +250,7 @@ s32 map_arm9_payload (void) {
 	dst = (void *)(g_expdata.va_fcram_base + OFFS_FCRAM_ARM9_PAYLOAD);
 
 	if (!g_ext_arm9_loaded) {
-        return 0;
+		return 0;
 	}
 	else {
 		// external ARM9 payload
@@ -278,7 +289,7 @@ s32 map_arm11_payload (void) {
 	size = sizeof(g_arm11shared);
 
 	dst = (u8 *)(g_expdata.va_exc_handler_base_W +
-	      OFFS_EXC_HANDLER_UNUSED + offs);
+		OFFS_EXC_HANDLER_UNUSED + offs);
 
 	// TODO sanitize 'size'
 	if (result_a && size) {
@@ -292,25 +303,23 @@ s32 map_arm11_payload (void) {
 void exploit_arm9_race_condition (void) {
 
 	s32 (* const _KernelSetState)(u32, u32, u32, u32) =
-	    (void *)g_expdata.va_kernelsetstate;
+		(void *)g_expdata.va_kernelsetstate;
 
 	asm volatile ("clrex");
 
-	/* copy ARM11 payload and console specific data */
-	if (map_arm11_payload() &&
-		/* copy ARM9 payload to FCRAM */
-		map_arm9_payload()) {
-
+	/* copy ARM11 payload and console specific data and
+	   copy ARM9 payload to FCRAM */
+	if (map_arm11_payload() && map_arm9_payload()) {
 		/* patch ARM11 kernel to force it to execute
 		   our code (hook1 and hook2) as soon as a
 		   "firmlaunch" is triggered */
-		redirect_codeflow((u32 *)(g_expdata.va_exc_handler_base_X +
-		                  OFFS_EXC_HANDLER_UNUSED),
-		                  (u32 *)g_expdata.va_patch_hook1);
+		redirect_codeflow((u32 *)
+			(g_expdata.va_exc_handler_base_X + OFFS_EXC_HANDLER_UNUSED),
+			(u32 *)g_expdata.va_patch_hook1);
 
-		redirect_codeflow((u32 *)(PA_EXC_HANDLER_BASE +
-		                  OFFS_EXC_HANDLER_UNUSED + 4),
-		                  (u32 *)g_expdata.va_patch_hook2);
+		redirect_codeflow((u32 *)
+			(PA_EXC_HANDLER_BASE + OFFS_EXC_HANDLER_UNUSED + 4),
+			(u32 *)g_expdata.va_patch_hook2);
 
 		CleanEntireDataCache();
 		InvalidateEntireInstructionCache();
