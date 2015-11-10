@@ -62,7 +62,7 @@ s32 get_exploit_data (struct exploit_data *data) {
 	sysmodel = isN3DS ? SYS_MODEL_NEW_3DS : SYS_MODEL_OLD_3DS;
 
 	/* copy platform and firmware dependent data */
-	for(i=0; i < sizeof(supported_systems) / sizeof(supported_systems[0]); i++) {
+	for(i = 0; i < sizeof(supported_systems) / sizeof(supported_systems[0]); i++) {
 		if (supported_systems[i].firm_version == fversion &&
 			supported_systems[i].sys_model & sysmodel) {
 				memcpy(data, &supported_systems[i], sizeof(struct exploit_data));
@@ -253,7 +253,7 @@ s32 map_arm9_payload (void) {
 	dst = (void *)(g_expdata.va_fcram_base + OFFS_FCRAM_ARM9_PAYLOAD);
 
 	if (!g_ext_arm9_loaded) {
-        return 0;
+		return 0;
 	}
 	else {
 		// external ARM9 payload
