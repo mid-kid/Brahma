@@ -181,10 +181,16 @@ s32 recv_arm9_payload (void) {
 
 /* reads ARM9 payload from a given path.
    filename: full path of payload
+   offset: offset of the payload in the file
+   max_psize: the maximum size of the payload that should be loaded (if 0, ARM9_MAX_PAYLOAD_SIZE. Should be smaller than ARM9_MAX_PAYLOAD_SIZE)
    returns: 0 on failure, 1 on success */
-s32 load_arm9_payload (char *filename) {
+s32 load_arm9_payload_offset (char *filename, u32 offset, u32 max_psize) {
 	s32 result = 0;
 	u32 fsize = 0;
+	u32 psize = 0;
+
+	if (max_psize == 0 || max_psize > ARM9_PAYLOAD_MAX_SIZE)
+		max_psize = ARM9_PAYLOAD_MAX_SIZE;
 
 	if (!filename)
 		return result;
@@ -193,11 +199,19 @@ s32 load_arm9_payload (char *filename) {
 	if (f) {
 		fseek(f , 0, SEEK_END);
 		fsize = ftell(f);
-		g_ext_arm9_size = fsize;
-		rewind(f);
-		if (fsize >= 8 && (fsize <= ARM9_PAYLOAD_MAX_SIZE)) {
-				u32 bytes_read = fread(g_ext_arm9_buf, 1, fsize, f);
-				result = (g_ext_arm9_loaded = (bytes_read == fsize));
+
+		if (offset < fsize) {
+			psize = fsize - offset;
+			if (psize > max_psize)
+				psize = max_psize;
+
+			g_ext_arm9_size = psize;
+
+			fseek(f, offset, SEEK_SET);
+			if (psize >= 8) {
+				u32 bytes_read = fread(g_ext_arm9_buf, 1, psize, f);
+				result = (g_ext_arm9_loaded = (bytes_read == psize));
+			}
 		}
 		fclose(f);
 	}
