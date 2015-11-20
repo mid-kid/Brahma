@@ -53,6 +53,10 @@ hook2:
 	LDR             R2, pa_hijack_arm9_dst
 	MOV             R4, R2
 	BL              copy_mem
+	MOV		r0, #0
+	MCR		p15, 0, r0, c7, c10, 0	@ Clean data cache
+	MCR		p15, 0, r0, c7, c10, 4	@ Drain write buffer
+	MCR		p15, 0, r0, c7, c5, 0	@ Flush instruction cache
 	BX              R4
 
 @ exploits a race condition in order
