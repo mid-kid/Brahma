@@ -9,12 +9,6 @@
 #endif
 
 int main (void) {
-    // Initialize services
-    gfxInitDefault();
-
-    // Make sure the settings applied by gfxInitDefault come into effect
-    gfxSwapBuffers();
-
     if (brahma_init()) {
         if (load_arm9_payload_offset("/" LAUNCHER_PATH, 0x12000, 0x10000) != 1)
             goto error;
@@ -22,11 +16,11 @@ int main (void) {
         brahma_exit();
     }
 
-    gfxExit();
     // Return to hbmenu
     return 0;
 
 error:
+    gfxInitDefault();
     consoleInit(GFX_BOTTOM, NULL);
     printf("An error occurred while loading the payload.\nMake sure your launcher is located at:\n/" LAUNCHER_PATH);
     wait_any_key();
