@@ -46,7 +46,7 @@ APP_AUTHOR	?=	patois
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard
 
 CFLAGS	:=	-g -Wall -Wextra -O3 -mword-relocations \
-			-fomit-frame-pointer -ffast-math \
+			-fomit-frame-pointer -ffast-math -flto \
 			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DARM_ARCH -DLAUNCHER_PATH='"$(filepath)$(name)"'
@@ -54,7 +54,7 @@ CFLAGS	+=	$(INCLUDE) -DARM11 -D_3DS -DARM_ARCH -DLAUNCHER_PATH='"$(filepath)$(na
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-specs=3dsx.specs -flto -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
 LIBS	:= -lctru -lm
 
